@@ -201,6 +201,17 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
+  double calculatePortfolioValue() {
+    double holdingsValue = transactions.fold(0, (prev, transaction) {
+      if (transaction['type'] == 'Buy' && transaction['symbol'] == symbol) {
+        return prev + (transaction['totalCost'] ?? 0);
+      } else if (transaction['type'] == 'Sell' && transaction['symbol'] == symbol) {
+        return prev - transaction['price'];
+      } else {
+        return prev;
+      }
+    });
+    return holdingsValue + userBalance;
+  }
 
 }
