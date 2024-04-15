@@ -213,5 +213,126 @@ class _HomePageState extends State<HomePage> {
     });
     return holdingsValue + userBalance;
   }
-
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Stock Trading App'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Symbol: $symbol',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Balance: \$${userBalance.toStringAsFixed(2)}',
+                  style: TextStyle(fontSize: 18),
+                ),
+                Text(
+                  'Portfolio Value: \$${calculatePortfolioValue().toStringAsFixed(2)}',
+                  style: TextStyle(fontSize: 18),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            Expanded(
+              flex: 2,
+              child: intradayData.isEmpty
+                  ? Center(child: CircularProgressIndicator())
+                  : SfCartesianChart(
+                primaryXAxis: CategoryAxis(),
+                series: <ChartSeries>[
+                  LineSeries<Map<String, dynamic>, String>(
+                    dataSource: intradayData,
+                    xValueMapper: (Map<String, dynamic> data, _) => data['time'],
+                    yValueMapper: (Map<String, dynamic> data, _) => data['price'],
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                itemCount: transactions.length,
+                itemBuilder: (context, index) {
+                  var transaction = transactions[index];
+                  return ListTile(
+                    title: Text(
+                        '${transaction['type']} ${transaction['symbol']} for \$${transaction['totalCost']}'),
+                    subtitle: Text(
+                        '${transaction['quantity']} shares at ${transaction['price']} each - ${transaction['time']}'),
+                  );
+                },
+              ),
+            ),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text('Enter Quantity'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(
+                                keyboardType: TextInputType.number,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _quantity = int.tryParse(value) ?? 1;
+                                  });
+                                },
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                  'Total Cost: \$${(_quantity * intradayData.last['price']).toStringAsFixed(2)}'),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                buyStock();
+                              },
+                              child: Text('Proceed'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: Text('Cancel'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  child: Text('Buy'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    sellStock();
+                  },
+                  child: Text('Sell'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
