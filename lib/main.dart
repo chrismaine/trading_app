@@ -117,4 +117,90 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+  
+  void sellStock() {
+    double currentPrice = intradayData.last['price'];
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Enter Quantity'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                keyboardType: TextInputType.number,
+                onChanged: (value) {
+                  setState(() {
+                    _quantity = int.tryParse(value) ?? 1;
+                  });
+                },
+              ),
+              SizedBox(height: 16),
+              Text(
+                  'Total Earn: \$${(_quantity * currentPrice).toStringAsFixed(2)}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                double totalEarn = _quantity * currentPrice;
+                Navigator.of(context).pop();
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Confirm Sale'),
+                      content: Text(
+                          'Are you sure you want to sell $_quantity shares of $symbol for \$${totalEarn.toStringAsFixed(2)}?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            if (_quantity > 0) {
+                              setState(() {
+                                userBalance += totalEarn;
+                                transactions.add({
+                                  'type': 'Sell',
+                                  'symbol': symbol,
+                                  'quantity': _quantity,
+                                  'price': currentPrice,
+                                  'totalEarn': totalEarn,
+                                  'time': DateTime.now(),
+                                });
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                  content: Text(
+                                      'You sold $_quantity shares of $symbol for \$${totalEarn.toStringAsFixed(2)}')));
+                            }
+                          },
+                          child: Text('Sell'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text('Cancel'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              child: Text('Proceed'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
 }
