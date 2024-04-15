@@ -24,6 +24,51 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String apiKey = 'GEGBPZAOZMHVLTDQ';
+  String symbol = 'IBM';
+  double userBalance = 1000.0; // Initial user balance
+  List<Map<String, dynamic>> intradayData = [];
+  List<Map<String, dynamic>> transactions = [];
+  int _quantity = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchIntradayData();
+    Timer.periodic(Duration(minutes: 5), (Timer t) => fetchIntradayData());
+  }
+
+  Future<void> fetchIntradayData() async {
+    final response = await http.get(Uri.parse(
+        'https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=$symbol&interval=5min&apikey=$apiKey'));
+    if (response.statusCode == 200) {
+      var jsonData = json.decode(response.body);
+      setState(() {
+        intradayData = _extractIntradayData(jsonData);
+      });
+    } else {
+      throw Exception('Failed to load intraday data');
+    }
+  }
+
+  List<Map<String, dynamic>> _extractIntradayData(
+      Map<String, dynamic> jsonData) {
+    List<Map<String, dynamic>> data = [];
+    jsonData['Time Series (5min)'].forEach((key, value) {
+      data.add({
+        'time': key,
+        'price': double.parse(value['4. close']),
+      });
+    });
+    return data;
+  }
+
   void buyStock() {
     double currentPrice = intradayData.last['price'];
     double totalCost = _quantity * currentPrice;
@@ -72,3 +117,4 @@ class MyApp extends StatelessWidget {
       },
     );
   }
+}
